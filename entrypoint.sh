@@ -1,5 +1,12 @@
 #!/bin/sh
 
+slug_ref() {
+  echo "$1" |
+    tr "[:upper:]" "[:lower:]" |
+    sed -r 's#refs/[^\/]*/##;s/[~\^]+//g;s/[^a-zA-Z0-9.]+/-/g;s/^-+\|-+$//g;s/^-*//;s/-*$//' |
+    cut -c1-63
+}
+
 set -e
 
 if [ -z "$AWS_S3_BUCKET" ]; then
@@ -41,6 +48,14 @@ ${AWS_SECRET_ACCESS_KEY}
 ${AWS_REGION}
 text
 EOF
+
+PUBLIC="${SOURCE_DIR:-.}"
+BRUNCH="$(slug_ref "$GITHUB_REF")"
+
+if [ -f $PUBLIC/robots.${BRUNCH}.txt ]
+then
+  cp $PUBLIC/robots.${BRUNCH}.txt $PUBLIC/robots.txt
+fi
 
 # Sync using our dedicated profile and suppress verbose messages.
 # All other flags are optional via the `args:` directive.
